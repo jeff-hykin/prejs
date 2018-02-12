@@ -1,0 +1,81 @@
+#!/usr/bin/ruby
+# helper functions 
+    class String
+        def mgsub(key_value_pairs=[].freeze)
+            # got this from https://www.safaribooksonline.com/library/view/ruby-cookbook/0596523696/ch01s18.html
+            regexp_fragments = key_value_pairs.collect { |k,v| k }
+            gsub(  Regexp.union(*regexp_fragments)) do |match|
+                key_value_pairs.detect{|k,v| k =~ match}[1]
+            end
+        end
+    end 
+    def subFolders(path_)
+        return Dir.entries(path_).select {|entry| File.directory? File.join(path_,entry) and !(entry =='.' || entry == '..') }
+    end 
+
+    def preprocess(input_string)
+        funcs_to_check_for = {}
+        new_lines = []
+        lines_ = input_string.split("\n")
+        if lines_[0].match /\A#prejs\s*/
+            lines_[0] = ""
+        end
+        for each_line in lines_
+            output_ = each_line.match /\A((?: |\t)*)#(\w+)\(((?: *.+?(?:(?:\\\\)+|(?<!\\)),)*? *.+?(?:(?:\\\\)+|(?<!\\))) *\)(?:\s*\z| *= *(.+)\z)/
+            if output_ != nil
+                indent_     = output_[1]
+                indent_     = "" if indent_ == nil
+                name_       = output_[2] 
+                arguments_  = output_[3].split(",")
+                definition_ = output_[4]
+                # if its an assignment 
+                if definition_ != nil 
+                    funcs_to_check_for[name_] = { def: definition_ , args: arguments_ }
+                    replacement_ = nil
+                elsif funcs_to_check_for.keys.include? name_ 
+                    # FIXME check number of arguments 
+                    individual_argument_replacements = []
+                    for each_arg in funcs_to_check_for[name_][:args]
+                        individual_argument_replacements << [Regexp.new(Regexp.escape(each_arg)), arguments_.shift]
+                    end#for 
+                    replacement_ = funcs_to_check_for[name_][:def]
+                    replacement_ = indent_ + replacement_.mgsub(individual_argument_replacements)
+                else 
+                    raise "\n\nI found a replacement function: #{name_}(#{output_[3]})\nBut I didnt see a definition for it beforehand\nlist of current definitions: #{funcs_to_check_for.keys}"
+                end#if
+                if replacement_ != nil 
+                    new_lines << replacement_
+                end
+            # if no # definition
+            else 
+                new_lines << each_line
+            end#if
+        end#for
+        return new_lines.join("\n")
+    end#def
+
+
+
+if ARGV.length == 0
+    all_js_files = Dir.glob(Dir.pwd+"/**/*.js")
+# if one argument, then check if its a folder
+elsif ARGV.length == 1
+    path_ = Dir.pwd+"/"+ARGV[0]+"/**/*.js"
+    all_js_files = Dir.glob(path_)
+end#if 
+
+for each_path in all_js_files
+    # file in
+    the_file = File.open(each_path,"r")
+    input_ = the_file.read
+    # if the file doesnt start with #prejs, then skip it
+    if not input_.match /\A#prejs/
+        the_file.close
+        next
+    end 
+    # file out 
+    output_ = preprocess(input_)
+    the_file = File.open(each_path,"w+")
+    the_file.write(output_)
+    the_file.close
+end 
