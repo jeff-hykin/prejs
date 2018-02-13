@@ -17,9 +17,9 @@
         funcs_to_check_for = {}
         new_lines = []
         lines_ = input_string.split("\n")
-        if lines_[0].match /\A#prejs\s*/
-            lines_[0] = ""
-        end
+        # if lines_[0].match /\A#prejs\s*/
+        #     lines_[0] = ""
+        # end
         for each_line in lines_
             output_ = each_line.match /\A((?: |\t)*)#(\w+)\(((?: *.+?(?:(?:\\\\)+|(?<!\\)),)*? *.+?(?:(?:\\\\)+|(?<!\\))) *\)(?:\s*\z| *= *(.+)\z)/
             if output_ != nil
@@ -60,22 +60,34 @@ if ARGV.length == 0
     all_js_files = Dir.glob(Dir.pwd+"/**/*.js")
 # if one argument, then check if its a folder
 elsif ARGV.length == 1
-    path_ = Dir.pwd+"/"+ARGV[0]+"/**/*.js"
-    all_js_files = Dir.glob(path_)
+    input_ = ARGV[0]
+    all_js_files = []
+    # if its a file name
+    if input_.match /.+\.\w+/
+        puts "match is #{Dir.pwd+"/"+input_}"
+        all_js_files << Dir.pwd+"/"+input_
+    else
+        path_ = Dir.pwd+"/"+input_+"/**/*.prejs"
+        all_js_files = Dir.glob(path_)
+    end
 end#if 
-
+p all_js_files
 for each_path in all_js_files
     # file in
     the_file = File.open(each_path,"r")
     input_ = the_file.read
-    # if the file doesnt start with #prejs, then skip it
-    if not input_.match /\A#prejs/
-        the_file.close
-        next
-    end 
+    # # if the file doesnt start with #prejs, then skip it
+    # if not input_.match /\A#prejs/
+    #     the_file.close
+    #     next
+    # end 
     # file out 
-    output_ = preprocess(input_)
-    the_file = File.open(each_path,"w+")
+    the_file.close
+    output_  = preprocess(input_)
+    # get the base file name, and save it as
+    base     = each_path.gsub(/(?<base>\A.+\.)\w+/, "\\k<base>")
+    puts "base is ",base
+    the_file = File.open(base+"js","w+")
     the_file.write(output_)
     the_file.close
 end 

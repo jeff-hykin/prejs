@@ -1,0 +1,249 @@
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { getVendorRequest, saveVendor } from './vendorActions';
+import TextField from 'material-ui/TextField';
+import Checkbox from 'material-ui/Checkbox';
+import Button from 'material-ui/Button';
+import Input, { InputLabel, InputAdornment } from 'material-ui/Input';
+import createHistory from 'history/createHashHistory'
+import { FormControl } from 'material-ui/Form';
+import { withStyles, MuiThemeProvider,createMuiTheme } from 'material-ui/styles';
+import blue from 'material-ui/colors/blue';
+import us_states_list from '../../utils/us_states_list'
+
+import {routeCodes} from "../../config/routes";
+
+
+
+
+const styles = theme => ({
+    textFieldInput:{
+	borderRadius: 6,
+	backgroundColor: theme.palette.common.white,
+	border: '1px solid #ced4da',
+	fontSize: 12,
+	padding: '6px 12px',
+	height: '1em',
+	width: 'calc(100% - 30px)',
+	transition: theme.transitions.create(['border-color', 'box-shadow']),
+	'&:focus': {
+	    borderColor: '#80bdff',
+	    boxShadow: '0 0 0 0.2rem rgba(0,123,255,.25)',
+	},
+    },
+    button: {
+	borderRadius: 7,
+	fontSize: 16,
+	color: theme.palette.common.white,
+	margin: theme.spacing.unit,
+	width: '110px',
+    }
+});
+
+const theme = createMuiTheme({
+    palette: {
+	primary: blue,
+	secondary: {main: '#9E9E9E'},
+    },
+});
+
+
+
+@connect(state => ({
+    error: state.vendorState.get('error'),
+    loading: state.vendorState.get('loading'),
+    vendor: state.vendorState.get('vendor'),
+}))
+class VendorDetails extends Component {
+
+    constructor(props) {
+    	super(props);
+    	this.state = {
+    	    id:'',
+	    name: '',
+	    number: '',
+	    contact_person: '',
+	    designation: '',
+	    address_line: '',
+	    city: '',
+	    address_state: '',
+	    zip: '',
+	    email: '',
+	    phone: '',
+	    rate: '',
+	    effective_to: '',
+	    effective_from: '',
+	    billing_company: '',
+	    billing_person: '',
+	    billing_address_line: '',
+	    billing_city: '',
+	    billing_state: '',
+	    billing_zip: '',
+	    billing_email: '',
+	    billing_phone: ''
+    	};
+    }
+
+  componentWillMount() {
+    const {
+      dispatch,
+      classes,
+    } = this.props;
+
+    if (this.props.match.params.id) {
+      dispatch(getVendorRequest({id:this.props.match.params.id})); //maybe dispatch getvendorById
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.match.params.id && nextProps.vendor != null) {
+      const index = this.props.match.params.id;
+      this.setState({
+        id: nextProps.vendor.id,
+        name: nextProps.vendor.name,
+        number: nextProps.vendor.number,
+        contact_person: nextProps.vendor.contact_person,
+        designation: nextProps.vendor.designation,
+        generate_separate_invoice: nextProps.vendor.generate_separate_invoice,
+        address_line: nextProps.vendor.address_line,
+        city: nextProps.vendor.city,
+        address_state: nextProps.vendor.state,
+        zip: nextProps.vendor.zip,
+        email: nextProps.vendor.email,
+        phone: nextProps.vendor.phone,
+        rate: nextProps.vendor.rate,
+        effective_from: nextProps.vendor.effective_from,
+        effective_to: nextProps.vendor.effective_to,
+        billing_company: nextProps.vendor.billing_company_name,
+        billing_person: nextProps.vendor.billing_person,
+        billing_address_line: nextProps.vendor.billing_address_line,
+        billing_city: nextProps.vendor.billing_city,
+        billing_state: nextProps.vendor.billing_state,
+        billing_zip: nextProps.vendor.billing_zip,
+        billing_email: nextProps.vendor.billing_email,
+        billing_phone: nextProps.vendor.billing_phone
+      })
+
+    }
+  }
+
+    handleChange = name => event => {
+	this.setState({
+	    [name]: event.target.value,
+	});
+    };
+
+    changeValue(e, type) {
+        const value = e.target.value;
+        const next_state = {};
+        next_state[type] = value;
+        this.setState(next_state);
+    }
+
+    editVendor(e){
+      let vendor = {'name':this.state.name, 'number':this.state.number,'contact_person':this.state.contact_person, 'designation':this.state.designation, 'generate_separate_invoice':this.state.generate_separate_invoice, 'phone':this.state.phone, 'address_line':this.state.address_line,'city':this.state.city,'state':this.state.address_state,'zip':this.state.zip,'email':this.state.email,'commission_rate':this.state.rate,'effective_from':this.state.effective_from,'effective_to':this.state.effective_to,'billing_company_name':this.state.billing_company,'billing_person':this.state.billing_person,'billing_address_line':this.state.billing_address_line,'billing_city':this.state.billing_city,'billing_state':this.state.billing_state,'billing_zip':this.state.billing_zip,'billing_phone':this.state.billing_phone};
+	if(this.props.match.params.id){
+	    vendor.id = this.props.match.params.id;
+	    this.props.dispatch(saveVendor({vendor: vendor, history: this.props.history}));
+	}
+	else{
+	    this.props.dispatch(saveVendor({vendor: vendor, history: this.props.history}));
+	}
+    }
+    render() {
+	const {
+	    loading,
+	    error,
+	    vendor,
+	    classes,
+	} = this.props;
+	return (
+	    <div>
+	    {/*<label>{JSON.stringify(this.state.address_state)}</label>*/}
+	    <MuiThemeProvider theme={theme}>
+
+	    {loading ? <h1>Loading data ...</h1>:
+
+	     <div className='form-container'>
+
+        <div className="form-label">Vendor Name*:</div> <TextField className="form-control" value= { this.state.name } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'name') }/>
+        <div className="form-label">Vendor Number*:</div> <TextField className="form-control" value= { this.state.number } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'number') }/>
+        <div className="form-label">Contact Person*:</div> <TextField className="form-control" value= { this.state.contact_person } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'contact_person') }/>
+        <div className="form-label">Designation:</div> <TextField className="form-control" value= { this.state.designation } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'designation') }/>
+		<label className="form-label">Vendor Name*:</label> <TextField className="form-control" value= {this.state.name} InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'name') } />
+		<div className="form-label">Vendor Number*:</div> <TextField className="form-control" value= { this.state.number } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'number') }/>
+		<div className="form-label">Contact Person*:</div> <TextField className="form-control" defaultValue= { this.state.contact_person } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'contact_person') }/>
+		<div className="form-label">Designation:</div> <TextField className="form-control" defaultValue= { this.state.designation } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'designation') }/>
+
+		 <div className="form-heading">CONTACT</div>
+		 <div className="form-label">Address*:</div> <TextField className="form-control" defaultValue= {this.state.address_line } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">City:</div> <TextField className="form-control" defaultValue= { this.state.city } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">State:</div>
+		 <TextField select
+			    defaultValue={this.state.address_state}
+			    onChange={this.handleChange('address_state')}
+			    InputProps={{disableUnderline: true,
+					 classes:{input: classes.textFieldInput}}}
+			    SelectProps={{ native: true }}
+		 >
+		     {us_states_list.map(option => (
+			 <option key={option.value} value={option.value}>
+			     {option.label}
+			 </option>
+		     ))}
+		 </TextField>
+		 <div className="form-label">Zip Code:</div> <TextField className="form-control" defaultValue= { this.state.zip } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Email:</div> <TextField className="form-control" defaultValue= { this.state.email } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Mobile:</div> <TextField className="form-control" defaultValue= { this.state.phone } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-heading">COMMISSION</div>
+		 <div className="form-label">Commission Rate*:</div> <TextField className="form-control" defaultValue= { this.state.rate } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Effective From Date:</div> <TextField className="form-control" defaultValue= { this.state.effective_to } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Effective To Date:</div> <TextField className="form-control" defaultValue= { this.state.effective_from } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') }  />
+		 <div className="form-heading"><Checkbox style={{height:30}} />BILLING ADDRESS - SAME AS CONTACT DETAILS</div>
+		 <div className="form-label">Billing Company Name*:</div> <TextField className="form-control" defaultValue= { this.state.billing_company } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Contact Name:</div> <TextField className="form-control" defaultValue= { this.state.billing_person } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Address*:</div> <TextField className="form-control" defaultValue= { this.state.billing_address_line } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">City:</div> <TextField className="form-control" defaultValue= { this.state.billing_city } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">State:</div>
+		 <TextField
+		     className="form-control"
+		     defaultValue={this.state.billing_state}
+		     select
+		     onChange={this.handleChange('billing_state')}
+		     InputProps={{disableUnderline: true,
+				  classes:{input: classes.textFieldInput}}}
+		     SelectProps={{ native: true }}
+		 >
+		     {us_states_list.map(option => (
+			 <option key={option.value} value={option.value}>
+			     {option.label}
+			 </option>
+		     ))}
+		 </TextField>
+		 <div className="form-label">Zip Code:</div> <TextField className="form-control" defaultValue= { this.state.zip } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Email:</div> <TextField className="form-control" defaultValue= { this.state.billing_email } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+		 <div className="form-label">Mobile:</div> <TextField className="form-control" defaultValue= { this.state.billing_phone } InputProps={{disableUnderline: true,classes:{input: classes.textFieldInput}}} onChange={(e) => this.changeValue(e,'address_line') } />
+     <div className="form-heading">INVOICE</div>
+      <div className="form-label">Concatenate Warehouse No.:</div> <Checkbox style={{height:30}}  className="form-control" defaultValue= { this.state.generate_separate_invoice } onChange={(e) => this.changeValue(e,'concatenate_warehouse_no') }  />
+		 <div className="form-full-row-align-end">
+       <div className="form-button-container-2">
+		     <Button variant='raised' color="secondary" onClick={() => this.props.history.push(routeCodes.VENDORS)}>CANCEL</Button>
+		     <Button variant='raised' color="primary"  onClick={(e) => this.editVendor(e)}>SAVE</Button>
+       </div>
+		 </div>
+	     </div>
+	    }
+	    </MuiThemeProvider>
+	    </div>
+	);
+    }
+}
+VendorDetails.propTypes = {
+    error   : PropTypes.string,
+    loading : PropTypes.bool,
+    vendor  : PropTypes.object,
+    dispatch: PropTypes.func,
+};
+
+export default withStyles(styles)(VendorDetails)
